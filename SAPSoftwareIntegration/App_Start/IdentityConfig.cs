@@ -11,6 +11,9 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Microsoft.Owin.Security;
 using SAPSoftwareIntegration.Models;
+using SendGrid;
+using SendGrid.Helpers.Mail;
+using System.Threading.Tasks;
 
 namespace SAPSoftwareIntegration
 {
@@ -18,8 +21,25 @@ namespace SAPSoftwareIntegration
     {
         public Task SendAsync(IdentityMessage message)
         {
+            return configSendGridasyncAsync(message);
+
             // Plug in your email service here to send an email.
             return Task.FromResult(0);
+        }
+
+        private async Task configSendGridasyncAsync(IdentityMessage message)
+        {
+            var apiKey = System.Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+            var client = new SendGridClient(apiKey);
+            var msg = new SendGridMessage()
+            {
+                From = new EmailAddress("test@example.com", "DX Team"),
+                Subject = "Hello World from the SendGrid CSharp SDK!",
+                PlainTextContent = "Hello, Email!",
+                HtmlContent = "<strong>Hello, Email!</strong>"
+            };
+            msg.AddTo(new EmailAddress("robin.ward01@sap.com", "Test User"));
+            var response = await client.SendEmailAsync(msg);
         }
     }
 
