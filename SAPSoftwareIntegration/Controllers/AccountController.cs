@@ -210,7 +210,8 @@ namespace SAPSoftwareIntegration.Controllers
                         PlainTextContent = "Please confirm your SAP Software Integration account by clicking this  <a href=\"" + callbackUrl + "\">link.</a>",
                         HtmlContent = "Please confirm your SAP Software Integration account by clicking this  <a href=\"" + callbackUrl + "\">link</a>."
                     };
-                    msg.AddTo(new EmailAddress("robin@steelcitysites.net", "Test User"));
+                    msg.AddTo(new EmailAddress(model.Email, model.Email));
+                    //msg.AddTo(new EmailAddress("robin@steelcitysites.net", "Test User"));
                     var response = await client.SendEmailAsync(msg);
 
                     return RedirectToAction("EmailNotConfirmed", "Account");
