@@ -315,6 +315,7 @@
     <Content Include="Scripts\sammy-0.7.5.min.js" />
     <Content Include="Views\DataAnalysisTool\_Home.cshtml" />
     <Content Include="Views\DataAnalysisTool\Index.cshtml" />
+    <Content Include="Views\Account\EmailNotConfirmed.cshtml" />
     <None Include="Views\SoftwareDeployment\Index.cshtml" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Account\ConfirmEmail.cshtml" />

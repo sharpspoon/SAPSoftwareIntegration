@@ -86,9 +86,13 @@ namespace SAPSoftwareIntegration.Controllers
             {
                 return View(model);
             }
-
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, change to shouldLockout: true
+            var userid = UserManager.FindByEmail(model.Email).Id;
+            if (!UserManager.IsEmailConfirmed(userid))
+            {
+                return View("EmailNotConfirmed");
+            }
             var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)
             {
@@ -155,8 +159,15 @@ namespace SAPSoftwareIntegration.Controllers
         {
             return View();
         }
+
+        public ActionResult EmailNotConfirmed()
+        {
+            AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
+            return View();
+        }
         static async Task Execute()
         {
+            
             var apiKey = System.Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
             var client = new SendGridClient(apiKey);
             var msg = new SendGridMessage()
@@ -180,18 +191,29 @@ namespace SAPSoftwareIntegration.Controllers
             {
                 var user = new ApplicationUser { UserName = model.Email, Email = model.Email, Hometown = model.Hometown };
                 var result = await UserManager.CreateAsync(user, model.Password);
-                await Execute();
+                //await Execute();
                 if (result.Succeeded)
                 {
                     await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
 
                     // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
                     // Send an email with this link
-                    // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                    // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
+                    string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
+                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
+                    await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
+                    var apiKey = System.Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+                    var client = new SendGridClient(apiKey);
+                    var msg = new SendGridMessage()
+                    {
+                        From = new EmailAddress("robin.ward01@sap.com", "SAPSI Team"),
+                        Subject = "Please confirm your SAP Software Integration account",
+                        PlainTextContent = "Please confirm your SAP Software Integration account by clicking this  <a href=\"" + callbackUrl + "\">link.</a>",
+                        HtmlContent = "Please confirm your SAP Software Integration account by clicking this  <a href=\"" + callbackUrl + "\">link</a>."
+                    };
+                    msg.AddTo(new EmailAddress("robin@steelcitysites.net", "Test User"));
+                    var response = await client.SendEmailAsync(msg);
 
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("EmailNotConfirmed", "Account");
                 }
                 AddErrors(result);
             }
